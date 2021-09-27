@@ -9,7 +9,7 @@ By sending alerts to Teams, we can simplify addition and removal alert recipient
 
 ## Installation
 
-Install dependancies from requirements.txt and place `notify-teams.py` where it can be executed by the Nagios user. Make the script executable with `chmod +x notify-teams.py`.
+Install dependancies from requirements.txt and place `notify-teams.py` where it can be executed by the Nagios user (e.g. `/usr/local/nagios/libexec/notify-teams.py`). Make the script executable with `chmod +x notify-teams.py`.
 
 ## Configuration
 
@@ -29,8 +29,12 @@ Create a command object in the Nagios configuration.
 
 ```
 define command {
-    command_name notify_teams
-    command_line /usr/bin/printf "$LONGSERVICEOUTPUT$" | /path/to/script/notify-teams.py  "$NOTIFICATIONTYPE$: $HOSTALIAS$/$SERVICEDESC$ is $SERVICESTATE$" "$SERVICEOUTPUT$" $_CONTACTWEBHOOKURL$
+    command_name notify-service-by-teams
+    command_line /usr/local/nagios/libexec/notify-teams.py --type "$NOTIFICATIONTYPE$" --host "$HOSTNAME$" --service "$SERVICEDESC$" --alert "$SERVICESTATE$" --output "$SERVICEOUTPUT$" --url $_CONTACTWEBHOOKURL$
+}
+define command {
+    command_name notify-host-by-teams
+    command_line /usr/local/nagios/libexec/notify-teams.py --type "$NOTIFICATIONTYPE$" --host "$HOSTNAME$" --alert "$HOSTSTATE$" --output "$HOSTOUTPUT$" --url $_CONTACTWEBHOOKURL$
 }
 ```
 Create a contact object with the custom variable macro _WEBHOOK set to the URL from the Teams channel connector. This variable is used when running the command above.
@@ -45,8 +49,8 @@ define contact {
     service_notification_period	24x7 
     host_notification_options	d,u,r,f,s
     service_notification_options	w,u,c,r,f
-    host_notification_commands	notify_teams
-    service_notification_commands	notify_teams
+    host_notification_commands	notify-host-by-teams
+    service_notification_commands	notify-service-by-teams
     _WEBHOOKURL https://outlook.office.com/webhook/2bfd8a0a-1d45-4ea6-a736-db25a6be5c95@44467e6f-462c-4ea2-823f-7800de5434e3/IncomingWebhook/2863b6ee982c4c51af6e96852289c0c6/ba913a1a-4779-41ca-96af-93ed0869be1b
 }
 ```
